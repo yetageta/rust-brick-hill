@@ -1,6 +1,6 @@
 use crate::{
     packet_builder,
-    player::{self, Player},
+    player::{self, Player}, buffer::Buffer,
 };
 use std::{
     io::Write,
@@ -37,6 +37,28 @@ impl Game {
         return &self.players[0];
     }
 
+    pub fn broadcast_packet(&mut self, buf: Buffer) {
+        for plr in &self.players {
+            let unlocked = plr.lock();
+
+            if let Ok(p) = unlocked {
+                let stream = &p.stream;
+                match stream {
+                    Some(_s) => {
+                        let mut s = _s.lock().unwrap();
+                        match s.write(&buf.data) {
+                            Ok(_) => {}
+                            Err(_) => {
+                                println!("Failed to send message to {}", p.username);
+                            }
+                        };
+                    }
+                    None => {}
+                }
+            }
+        }
+    }
+
     pub fn chatted(&mut self, net_id: u32, command: String, args: String) {
         let player = self.find_player(net_id);
 
@@ -51,24 +73,6 @@ impl Game {
         ));
         drop(player);
 
-        for plr in &self.players {
-            let unlocked = plr.lock();
-
-            if let Ok(p) = unlocked {
-                let stream = &p.stream;
-                match stream {
-                    Some(_s) => {
-                        let mut s = _s.lock().unwrap();
-                        match s.write(&packet.data) {
-                            Ok(_) => {}
-                            Err(_) => {
-                                println!("Failed to send message to {}", p.username);
-                            }
-                        };
-                    }
-                    None => {}
-                }
-            }
-        }
+        self.broadcast_packet(packet);
     }
 }
