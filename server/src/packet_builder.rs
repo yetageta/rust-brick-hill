@@ -26,6 +26,5 @@ pub fn build_message_packet(message: String) -> buffer::Buffer {
     packet.write_string(message);
     packet.write_uint_v();
 
-    return packet
+    return packet;
 }
-

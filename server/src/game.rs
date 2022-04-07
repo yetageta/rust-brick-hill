@@ -1,5 +1,11 @@
-use crate::{player::{self, Player}, packet_builder};
-use std::{sync::{Arc, Mutex}, io::Write};
+use crate::{
+    packet_builder,
+    player::{self, Player},
+};
+use std::{
+    io::Write,
+    sync::{Arc, Mutex},
+};
 
 pub struct Game {
     pub is_local: bool,
@@ -35,12 +41,14 @@ impl Game {
         let player = self.find_player(net_id);
 
         if command != "chat" {
-            return
+            return;
         }
 
-        let packet = packet_builder::build_message_packet(
-            format!("\\c6 {}: \\c0{}", player.lock().unwrap().username, args)
-        );
+        let packet = packet_builder::build_message_packet(format!(
+            "\\c6 {}: \\c0{}",
+            player.lock().unwrap().username,
+            args
+        ));
         drop(player);
 
         for plr in &self.players {

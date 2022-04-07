@@ -31,10 +31,7 @@ impl Player {
         self.stream = Some(stream);
     }
 
-    pub fn check_auth(&mut self, buf: &mut Buffer, unlocked_game: Arc<Mutex<Game>>) {
-        //let token = buf.read_string();
-        //let version = buf.read_string();
-
+    pub fn check_auth(&mut self, _buf: &mut Buffer, unlocked_game: Arc<Mutex<Game>>) {
         let game = unlocked_game.lock().unwrap();
 
         if (*game).is_local {
@@ -49,7 +46,12 @@ impl Player {
 
             match &self.stream {
                 Some(stream) => {
-                    stream.lock().unwrap().write(&packet.data);
+                    match stream.lock().unwrap().write(&packet.data) {
+                        Ok(_) => {}
+                        Err(_) => {
+                            println!("Failed to send auth packet to {}", self.username);
+                        }
+                    };
                 }
                 None => {
                     println!("No stream to send auth to");
@@ -59,6 +61,6 @@ impl Player {
             return;
         }
 
-        //let url = format!("https://api.brick-hill.com/v1/auth/verifyToken?token=${}&host_key=${}", token, "");
+        // let url = format!("https://api.brick-hill.com/v1/auth/verifyToken?token=${}&host_key=${}", token, "");
     }
 }
