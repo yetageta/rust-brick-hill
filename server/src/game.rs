@@ -42,20 +42,8 @@ impl Game {
         for plr in &self.players {
             let unlocked = plr.lock();
 
-            if let Ok(p) = unlocked {
-                let stream = &p.stream;
-                match stream {
-                    Some(_s) => {
-                        let mut s = _s.lock().unwrap();
-                        match s.write(&buf.data) {
-                            Ok(_) => {}
-                            Err(_) => {
-                                println!("Failed to send message to {}", p.username);
-                            }
-                        };
-                    }
-                    None => {}
-                }
+            if let Ok(mut p) = unlocked {
+                let _ = &p.send_packet(buf.clone());
             }
         }
     }

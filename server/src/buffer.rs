@@ -35,6 +35,7 @@ fn read_uint_v(buffer: &[u8]) -> Message {
     return msg;
 }
 
+#[derive(Clone)]
 pub struct Buffer {
     pub data: Vec<u8>,
 }
