@@ -3,10 +3,6 @@ use std::{io::Read, num::Wrapping};
 use byteorder::{ByteOrder, LittleEndian};
 use flate2::read::ZlibDecoder;
 
-pub struct Buffer {
-    pub data: Vec<u8>,
-}
-
 pub struct Message {
     message_size: u16,
     end: u16,
@@ -39,14 +35,18 @@ fn read_uint_v(buffer: &[u8]) -> Message {
     return msg;
 }
 
-impl Buffer {
-    pub fn new(bytes: Option<[u8; 80]>) -> Buffer {
-        match bytes {
-            Some(x) => return Buffer { data: x.to_vec() },
-            None => return Buffer { data: [].to_vec() },
-        }
-    }
+pub struct Buffer {
+    pub data: Vec<u8>,
+}
 
+pub fn new(bytes: Option<[u8; 80]>) -> Buffer {
+    match bytes {
+        Some(x) => return Buffer { data: x.to_vec() },
+        None => return Buffer { data: [].to_vec() },
+    }
+}
+
+impl Buffer {
     pub fn zlib_uncompress(&mut self) -> bool {
         let mut _buffer = [0; 80];
         let success: bool = match ZlibDecoder::new(&(*self.data)).read(&mut _buffer) {

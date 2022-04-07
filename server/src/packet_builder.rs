@@ -1,4 +1,4 @@
-use crate::buffer::Buffer;
+use crate::buffer;
 
 pub fn build_auth_packet(
     user_id: u32,
@@ -7,8 +7,8 @@ pub fn build_auth_packet(
     membership: u8,
     net_id: u32,
     brick_count: u32,
-) -> Buffer {
-    let mut packet = Buffer::new(None);
+) -> buffer::Buffer {
+    let mut packet = buffer::new(None);
     packet.write_byte(1);
     packet.write_uint32(net_id);
     packet.write_uint32(brick_count);
@@ -19,3 +19,11 @@ pub fn build_auth_packet(
     packet.write_uint_v();
     return packet;
 }
+
+pub fn build_message_packet(message: String) -> buffer::Buffer {
+    let mut packet = buffer::new(None);
+    packet.write_byte(6);
+    packet.write_string(message);
+    return packet
+}
+
