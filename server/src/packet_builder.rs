@@ -24,6 +24,8 @@ pub fn build_message_packet(message: String) -> buffer::Buffer {
     let mut packet = buffer::new(None);
     packet.write_byte(6);
     packet.write_string(message);
+    packet.write_uint_v();
+
     return packet
 }
 

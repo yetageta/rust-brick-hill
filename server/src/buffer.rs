@@ -150,5 +150,6 @@ impl Buffer {
             let byte = char as u8;
             self.write_byte(byte);
         }
+        self.write_byte(0);
     }
 }

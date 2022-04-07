@@ -18,6 +18,8 @@ fn handle_client(mut _stream: TcpStream, game: Arc<Mutex<game::Game>>) {
         let mut unlocked_stream = stream.lock().unwrap();
         match unlocked_stream.read(&mut data) {
             Ok(size) => {
+                drop(unlocked_stream);
+
                 if size == 0 {
                     break;
                 }
@@ -30,17 +32,19 @@ fn handle_client(mut _stream: TcpStream, game: Arc<Mutex<game::Game>>) {
                 if packet_type == 3 {
                     let command = buffer.read_string();
                     let args = buffer.read_string();
-                    println!("Command: {}, Args: {}", command, args);
 
                     let mut lock = game.try_lock();
                     if let Ok(ref mut mutex) = lock {
                         let locked_player = player.lock().unwrap();
-                        (*mutex).chatted(locked_player.net_id, command, args);
+                        let net_id = locked_player.net_id;
+                        drop(locked_player);
+
+                        (*mutex).chatted(net_id, command, args);
                     }
                 } else if packet_type == 1 {
                     player = Arc::new(Mutex::new(player::new()));
                     let mut locked_player = player.lock().unwrap();
-                    locked_player.set_stream(stream.clone());
+                    locked_player.set_stream(Arc::clone(&stream));
                     locked_player.check_auth(&mut buffer, Arc::clone(&game));
                     drop(locked_player);
 

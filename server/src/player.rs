@@ -51,7 +51,9 @@ impl Player {
                 Some(stream) => {
                     stream.lock().unwrap().write(&packet.data);
                 }
-                None => {}
+                None => {
+                    println!("No stream to send auth to");
+                }
             }
 
             return;

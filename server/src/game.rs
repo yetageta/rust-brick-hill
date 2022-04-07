@@ -10,7 +10,7 @@ pub struct Game {
 
 pub fn new() -> Game {
     return Game {
-        is_local: false,
+        is_local: true,
         brick_count: 0,
         players: vec![],
     };
@@ -41,14 +41,25 @@ impl Game {
         let packet = packet_builder::build_message_packet(
             format!("\\c6 {}: \\c0{}", player.lock().unwrap().username, args)
         );
+        drop(player);
 
         for plr in &self.players {
-            let unlocked = plr.lock().unwrap();
-            match &unlocked.stream {
-                Some(stream) => {
-                    stream.lock().unwrap().write(&packet.data);
-                },
-                None => todo!(),
+            let unlocked = plr.lock();
+
+            if let Ok(p) = unlocked {
+                let stream = &p.stream;
+                match stream {
+                    Some(_s) => {
+                        let mut s = _s.lock().unwrap();
+                        match s.write(&packet.data) {
+                            Ok(_) => {}
+                            Err(_) => {
+                                println!("Failed to send message to {}", p.username);
+                            }
+                        };
+                    }
+                    None => {}
+                }
             }
         }
     }
