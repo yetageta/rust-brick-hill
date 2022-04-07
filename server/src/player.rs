@@ -31,6 +31,22 @@ impl Player {
         self.stream = Some(stream);
     }
 
+    pub fn send_packet(&mut self, buf: Buffer) {
+        match &self.stream {
+            Some(stream) => {
+                match stream.lock().unwrap().write(&buf.data) {
+                    Ok(_) => {}
+                    Err(_) => {
+                        println!("Failed to send auth packet to {}", self.username);
+                    }
+                };
+            }
+            None => {
+                println!("No stream to send auth to");
+            }
+        }
+    }
+
     pub fn check_auth(&mut self, _buf: &mut Buffer, unlocked_game: Arc<Mutex<Game>>) {
         let game = unlocked_game.lock().unwrap();
 
@@ -44,19 +60,7 @@ impl Player {
                 game.brick_count,
             );
 
-            match &self.stream {
-                Some(stream) => {
-                    match stream.lock().unwrap().write(&packet.data) {
-                        Ok(_) => {}
-                        Err(_) => {
-                            println!("Failed to send auth packet to {}", self.username);
-                        }
-                    };
-                }
-                None => {
-                    println!("No stream to send auth to");
-                }
-            }
+            self.send_packet(packet);
 
             return;
         }

@@ -1,6 +1,7 @@
 use crate::{
+    buffer::Buffer,
     packet_builder,
-    player::{self, Player}, buffer::Buffer,
+    player::{self, Player},
 };
 use std::{
     io::Write,
