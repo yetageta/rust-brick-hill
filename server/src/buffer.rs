@@ -150,6 +150,14 @@ impl Buffer {
         }
     }
 
+    pub fn write_float32(&mut self, uint: f32) {
+        let mut buffer: [u8; 4] = [0; 4];
+        LittleEndian::write_f32(&mut buffer, uint as f32);
+        for i in 0..4 {
+            self.data.push(buffer[i]);
+        }
+    }
+
     pub fn read_string(&mut self) -> String {
         let mut new_string = String::new();
         let mut index = 0;

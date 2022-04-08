@@ -4,6 +4,7 @@ use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Mutex;
 
+mod brick;
 mod buffer;
 mod game;
 mod packet_builder;
@@ -85,6 +86,8 @@ async fn main() -> Result<(), ()> {
     println!("Server listening on port 42480");
 
     let game = Arc::new(Mutex::new(game::new()));
+
+    brick::load_from_file("map.brk".to_string());
 
     loop {
         let stream = match listener.accept().await {
