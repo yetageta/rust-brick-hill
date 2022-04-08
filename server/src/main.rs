@@ -43,6 +43,10 @@ fn handle_client(mut _stream: TcpStream, game: Arc<Mutex<game::Game>>) {
         buffer.read_uint_v();
         buffer.zlib_uncompress();
 
+        if buffer.data.len() == 0 {
+            continue;
+        }
+
         let packet_type = buffer.read_byte();
 
         if packet_type == 18 {

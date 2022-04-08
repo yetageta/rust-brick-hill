@@ -38,12 +38,14 @@ fn read_uint_v(buffer: &[u8]) -> Message {
 #[derive(Clone)]
 pub struct Buffer {
     pub data: Vec<u8>,
+
+    uint_length: u8
 }
 
 pub fn new(bytes: Option<[u8; 80]>) -> Buffer {
     match bytes {
-        Some(x) => return Buffer { data: x.to_vec() },
-        None => return Buffer { data: [].to_vec() },
+        Some(x) => return Buffer { data: x.to_vec(), uint_length: 0 },
+        None => return Buffer { data: [].to_vec(), uint_length: 0 },
     }
 }
 
@@ -80,6 +82,8 @@ impl Buffer {
         if length < 0x80 {
             let size = (length << 1) + 1;
             self.data.insert(0, size as u8);
+
+            self.uint_length = 1;
         } else if length < 0x4080 {
             let mut size = [0 as u8; 2];
             let i = ((length - 0x80) << 2) + 2;
@@ -88,6 +92,8 @@ impl Buffer {
             for i in 0..2 {
                 self.data.insert(0, size[1 - i]);
             }
+
+            self.uint_length = 2;
         } else if length < 0x204080 {
             let mut size = [0 as u8; 3];
             let i = ((length - 0x4080) << 3) + 4;
@@ -98,6 +104,8 @@ impl Buffer {
             for i in 0..3 {
                 self.data.insert(0, size[2 - i]);
             }
+
+            self.uint_length = 3;
         } else {
             let mut size = [0 as u8; 4];
             LittleEndian::write_u32(&mut size, ((length - 0x204080) * 8) as u32);
@@ -105,6 +113,8 @@ impl Buffer {
             for i in 0..4 {
                 self.data.insert(0, size[3 - i]);
             }
+
+            self.uint_length = 4;
         }
     }
 
@@ -116,6 +126,10 @@ impl Buffer {
 
     pub fn write_byte(&mut self, byte: u8) {
         self.data.push(byte);
+    }
+
+    pub fn prepend_type(&mut self, byte: u8) {
+        self.data.insert(self.uint_length.into(), byte)
     }
 
     pub fn write_uint32(&mut self, uint: u32) {

@@ -11,8 +11,8 @@ pub struct Player {
     pub username: String,
     pub user_id: u32,
     pub net_id: u32,
-    admin: bool,
-    membership: u8,
+    pub admin: bool,
+    pub membership: u8,
 }
 
 pub fn new() -> Player {
@@ -27,6 +27,17 @@ pub fn new() -> Player {
 }
 
 impl Player {
+    pub fn build_auth_packet(&mut self, brick_count: u32) -> Buffer {
+        return packet_builder::build_auth_packet(
+            self.user_id,
+            self.username.clone(),
+            self.admin,
+            self.membership,
+            self.net_id,
+            brick_count,
+        );
+    }
+    
     pub fn set_stream(&mut self, stream: Arc<Mutex<TcpStream>>) {
         self.stream = Some(stream);
     }
@@ -56,14 +67,7 @@ impl Player {
         if (*game).is_local {
             self.username = String::from(format!("Player {}", game.players.len() + 1));
 
-            let packet = packet_builder::build_auth_packet(
-                self.user_id,
-                self.username.clone(),
-                self.admin,
-                self.membership,
-                self.net_id,
-                game.brick_count,
-            );
+            let packet = self.build_auth_packet(game.brick_count);
 
             self.send_packet(packet);
 
