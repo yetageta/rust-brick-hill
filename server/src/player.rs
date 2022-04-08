@@ -2,7 +2,7 @@ use crate::{buffer::Buffer, game::Game, packet_builder};
 use std::{
     io::Write,
     net::TcpStream,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, MutexGuard},
 };
 
 pub struct Player {
@@ -34,12 +34,17 @@ impl Player {
     pub fn send_packet(&mut self, buf: Buffer) {
         match &self.stream {
             Some(stream) => {
-                match stream.lock().unwrap().write(&buf.data) {
+                let clone = Arc::clone(&stream);
+                match clone.lock().unwrap().write(&buf.data) {
                     Ok(_) => {}
-                    Err(_) => {
-                        println!("Failed to send auth packet to {}", self.username);
+                    Err(e) => {
+                        println!(
+                            "Failed to send auth packet to {}, Error:{}",
+                            self.username, e
+                        );
                     }
                 };
+                drop(clone);
             }
             None => {
                 println!("No stream to send auth to");
@@ -47,10 +52,10 @@ impl Player {
         }
     }
 
-    pub fn check_auth(&mut self, _buf: &mut Buffer, unlocked_game: Arc<Mutex<Game>>) {
-        let game = unlocked_game.lock().unwrap();
-
+    pub fn check_auth(&mut self, _buf: &mut Buffer, game: &mut MutexGuard<'_, Game>) {
         if (*game).is_local {
+            self.username = String::from(format!("Player {}", game.players.len() + 1));
+
             let packet = packet_builder::build_auth_packet(
                 self.user_id,
                 self.username.clone(),

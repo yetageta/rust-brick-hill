@@ -3,16 +3,15 @@ use crate::{
     packet_builder,
     player::{self, Player},
 };
-use std::{
-    io::Write,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
 pub struct Game {
     pub is_local: bool,
     pub brick_count: u32,
 
     pub players: Vec<Arc<Mutex<player::Player>>>,
+
+    pub last_net_id: u32,
 }
 
 pub fn new() -> Game {
@@ -20,6 +19,7 @@ pub fn new() -> Game {
         is_local: true,
         brick_count: 0,
         players: vec![],
+        last_net_id: 0,
     };
 }
 
@@ -36,6 +36,11 @@ impl Game {
             }
         }
         return &self.players[0];
+    }
+
+    pub fn new_net_object(&mut self) -> u32 {
+        self.last_net_id += 1;
+        return self.last_net_id - 1;
     }
 
     pub fn broadcast_packet(&mut self, buf: Buffer) {

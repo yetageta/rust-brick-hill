@@ -16,43 +16,14 @@ fn handle_client(mut _stream: TcpStream, game: Arc<Mutex<game::Game>>) {
 
     loop {
         let mut unlocked_stream = stream.lock().unwrap();
-        match unlocked_stream.read(&mut data) {
+
+        let success: bool = match (*unlocked_stream).read(&mut data) {
             Ok(size) => {
                 drop(unlocked_stream);
-
                 if size == 0 {
                     break;
                 }
-                let mut buffer = buffer::new(Some(data));
-                buffer.read_uint_v();
-                buffer.zlib_uncompress();
-
-                let packet_type = buffer.read_byte();
-
-                if packet_type == 3 {
-                    let command = buffer.read_string();
-                    let args = buffer.read_string();
-
-                    let mut lock = game.try_lock();
-                    if let Ok(ref mut mutex) = lock {
-                        let locked_player = player.lock().unwrap();
-                        let net_id = locked_player.net_id;
-                        drop(locked_player);
-
-                        (*mutex).chatted(net_id, command, args);
-                    }
-                } else if packet_type == 1 {
-                    player = Arc::new(Mutex::new(player::new()));
-                    let mut locked_player = player.lock().unwrap();
-                    locked_player.set_stream(Arc::clone(&stream));
-                    locked_player.check_auth(&mut buffer, Arc::clone(&game));
-                    drop(locked_player);
-
-                    let mut lock = game.try_lock();
-                    if let Ok(ref mut mutex) = lock {
-                        (*mutex).add_player(player.clone());
-                    }
-                }
+                true
             }
             Err(_) => {
                 println!(
@@ -61,6 +32,46 @@ fn handle_client(mut _stream: TcpStream, game: Arc<Mutex<game::Game>>) {
                 );
                 unlocked_stream.shutdown(Shutdown::Both).unwrap();
                 break;
+            }
+        };
+
+        if !success {
+            continue;
+        }
+
+        let mut buffer = buffer::new(Some(data));
+        buffer.read_uint_v();
+        buffer.zlib_uncompress();
+
+        let packet_type = buffer.read_byte();
+
+        if packet_type == 18 {
+            continue;
+        }
+
+        let mut result_lock = game.try_lock();
+        if let Ok(ref mut locked_game) = result_lock {
+            if packet_type == 1 {
+                let mut temp_player = player::new();
+                temp_player.net_id = locked_game.new_net_object();
+
+                player = Arc::new(Mutex::new(temp_player));
+
+                let mut locked_player = player.lock().unwrap();
+                locked_player.set_stream(Arc::clone(&stream));
+                locked_player.check_auth(&mut buffer, locked_game);
+                drop(locked_player);
+
+                (*locked_game).add_player(player.clone());
+            } else if packet_type == 3 {
+                let command = buffer.read_string();
+                let args = buffer.read_string();
+
+                let locked_player = player.lock().unwrap();
+                let net_id = locked_player.net_id;
+                drop(locked_player);
+
+                (*locked_game).chatted(net_id, command, args);
             }
         }
     }
