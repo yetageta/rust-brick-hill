@@ -39,13 +39,23 @@ fn read_uint_v(buffer: &[u8]) -> Message {
 pub struct Buffer {
     pub data: Vec<u8>,
 
-    uint_length: u8
+    uint_length: u8,
 }
 
 pub fn new(bytes: Option<[u8; 80]>) -> Buffer {
     match bytes {
-        Some(x) => return Buffer { data: x.to_vec(), uint_length: 0 },
-        None => return Buffer { data: [].to_vec(), uint_length: 0 },
+        Some(x) => {
+            return Buffer {
+                data: x.to_vec(),
+                uint_length: 0,
+            }
+        }
+        None => {
+            return Buffer {
+                data: [].to_vec(),
+                uint_length: 0,
+            }
+        }
     }
 }
 

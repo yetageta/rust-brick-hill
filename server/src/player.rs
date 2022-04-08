@@ -1,9 +1,8 @@
 use crate::{buffer::Buffer, game::Game, packet_builder};
-use std::{
-    io::Write,
-    net::TcpStream,
-    sync::{Arc, Mutex, MutexGuard},
-};
+use std::sync::Arc;
+use tokio::sync::{Mutex, MutexGuard};
+
+use tokio::{io::AsyncWriteExt, net::TcpStream};
 
 pub struct Player {
     pub stream: Option<Arc<Mutex<TcpStream>>>,
@@ -27,7 +26,7 @@ pub fn new() -> Player {
 }
 
 impl Player {
-    pub fn build_auth_packet(&mut self, brick_count: u32) -> Buffer {
+    pub async fn build_auth_packet(&mut self, brick_count: u32) -> Buffer {
         return packet_builder::build_auth_packet(
             self.user_id,
             self.username.clone(),
@@ -37,39 +36,34 @@ impl Player {
             brick_count,
         );
     }
-    
+
     pub fn set_stream(&mut self, stream: Arc<Mutex<TcpStream>>) {
         self.stream = Some(stream);
     }
 
-    pub fn send_packet(&mut self, buf: Buffer) {
-        match &self.stream {
-            Some(stream) => {
-                let clone = Arc::clone(&stream);
-                match clone.lock().unwrap().write(&buf.data) {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!(
-                            "Failed to send auth packet to {}, Error:{}",
-                            self.username, e
-                        );
-                    }
-                };
-                drop(clone);
+    pub async fn send_packet(&mut self, buf: Buffer) {
+        let stream = self.stream.as_ref().unwrap();
+        let mut new_stream = (&stream).clone().lock().await;
+
+        match new_stream.write(&buf.data).await {
+            Ok(size) => {
+                if size != buf.data.len() {
+                    println!("Failed to send all data: Size: {}", size);
+                }
             }
-            None => {
-                println!("No stream to send auth to");
+            Err(e) => {
+                println!("Error sending packet: {:?}", e);
             }
         }
     }
 
-    pub fn check_auth(&mut self, _buf: &mut Buffer, game: &mut MutexGuard<'_, Game>) {
+    pub async fn check_auth(&mut self, _buf: &mut Buffer, game: &mut MutexGuard<'_, Game>) {
         if (*game).is_local {
             self.username = String::from(format!("Player {}", game.players.len() + 1));
 
-            let packet = self.build_auth_packet(game.brick_count);
+            let packet = self.build_auth_packet(game.brick_count).await;
 
-            self.send_packet(packet);
+            self.send_packet(packet).await;
 
             return;
         }
