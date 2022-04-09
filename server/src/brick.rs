@@ -110,7 +110,6 @@ pub fn load_from_file(file_name: String) -> bool {
         match attribute.as_str() {
             "NAME" => {
                 last_brick.name = value;
-                println!("{}", last_brick.name);
                 continue;
             }
             "ROT" => {
@@ -157,8 +156,6 @@ pub fn load_from_file(file_name: String) -> bool {
                 data[7].parse::<f32>().unwrap(),
                 data[8].parse::<f32>().unwrap(),
             );
-
-            println!("{:?}", last_brick);
 
             bricks.push(Brick {
                 collision: true,
