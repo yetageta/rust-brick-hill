@@ -1,5 +1,7 @@
 use crate::{
+    brick,
     buffer::{self, Buffer},
+    colour::{self, Color},
     packet_builder,
     player::{self, Player},
 };
@@ -77,6 +79,30 @@ impl Game {
             packet.write_uint_v();
             last_player_lock.send_packet(packet).await;
         }
+    }
+
+    pub async fn send_brick(&mut self, net_id: u32, brick: brick::Brick) {
+        let mut packet: Buffer = buffer::new(None);
+        packet.write_byte(17); // SendBrick type
+        packet.write_uint32(1); // Amount of bricks
+
+        packet.write_uint32(brick.net_id);
+        packet.write_float32(brick.position.x);
+        packet.write_float32(brick.position.y);
+        packet.write_float32(brick.position.z);
+
+        packet.write_float32(brick.scale.x);
+        packet.write_float32(brick.scale.y);
+        packet.write_float32(brick.scale.z);
+
+        let rgb = colour::convert_hexcode_to_rgb(brick.colour).unwrap();
+        packet.write_uint32((rgb.red | (rgb.green << 8) | (rgb.blue << 16)) as u32);
+
+        packet.write_float32(brick.visibility);
+
+        let player = self.find_player(net_id).await;
+        let mut unlocked = player.lock().await;
+        unlocked.send_packet(packet).await;
     }
 
     pub async fn find_player(&mut self, net_id: u32) -> &Arc<Mutex<Player>> {

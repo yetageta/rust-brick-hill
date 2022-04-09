@@ -1,29 +1,29 @@
 use std::fs;
 
 #[derive(Default, Debug)]
-struct Vector3 {
-    x: f32,
-    y: f32,
-    z: f32,
+pub struct Vector3 {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
 }
 
 #[derive(Default, Debug)]
 pub struct Brick {
-    net_id: u32,
+    pub net_id: u32,
 
-    name: String,
-    colour: String,
-    shape: String,
+    pub name: String,
+    pub colour: String,
+    pub shape: String,
 
-    position: Vector3,
-    scale: Vector3,
-    light_enabled: bool,
-    light_colour: String,
-    light_range: u32,
-    visibility: f32,
-    rotation: i32,
+    pub position: Vector3,
+    pub scale: Vector3,
+    pub light_enabled: bool,
+    pub light_colour: String,
+    pub light_range: u32,
+    pub visibility: f32,
+    pub rotation: i32,
 
-    collision: bool,
+    pub collision: bool,
 }
 
 #[derive(Default)]
@@ -31,8 +31,6 @@ pub struct Environment {
     ambient: String,
     sky_colour: String,
     base_colour: String,
-
-    weather: String,
 }
 
 fn hex(r: f32, g: f32, b: f32) -> String {

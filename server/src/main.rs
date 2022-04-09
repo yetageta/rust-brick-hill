@@ -6,6 +6,7 @@ use tokio::sync::Mutex;
 
 mod brick;
 mod buffer;
+mod colour;
 mod game;
 mod packet_builder;
 mod player;
